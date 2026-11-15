@@ -1,0 +1,124 @@
+@page "/courses/edit"
+@using Microsoft.EntityFrameworkCore
+@using Courses.Models
+@inject IDbContextFactory<Courses.Data.CoursesContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Course</h2>
+<hr />
+@if (Course is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Course" OnValidSubmit="UpdateCourse" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Course.Id" value="@Course.Id" />
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <InputText id="title" @bind-Value="Course.Title" class="form-control" />
+                    <ValidationMessage For="() => Course.Title" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputText id="description" @bind-Value="Course.Description" class="form-control" />
+                    <ValidationMessage For="() => Course.Description" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="durationhours" class="form-label">DurationHours:</label>
+                    <InputNumber id="durationhours" @bind-Value="Course.DurationHours" class="form-control" />
+                    <ValidationMessage For="() => Course.DurationHours" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="price" class="form-label">Price:</label>
+                    <InputNumber id="price" @bind-Value="Course.Price" class="form-control" />
+                    <ValidationMessage For="() => Course.Price" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="startedon" class="form-label">StartedOn:</label>
+                    <InputDate id="startedon" @bind-Value="Course.StartedOn" class="form-control" />
+                    <ValidationMessage For="() => Course.StartedOn" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="completedon" class="form-label">CompletedOn:</label>
+                    <InputDate id="completedon" @bind-Value="Course.CompletedOn" class="form-control" />
+                    <ValidationMessage For="() => Course.CompletedOn" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status:</label>
+                    <InputSelect id="status" @bind-Value="Course.Status" class="form-select">
+    @foreach (var status in Enum.GetValues<CourseStatus>())
+    {
+        <option value="@status">@status</option>
+    }
+</InputSelect>
+                    <ValidationMessage For="() => Course.Status" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/courses">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Course? Course { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Course ??= await context.Courses.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Course is null)
+        {
+            NavigationManager.NotFound();
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateCourse()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Course!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!CourseExists(Course!.Id))
+            {
+                NavigationManager.NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/courses");
+    }
+
+    private bool CourseExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Courses.Any(e => e.Id == id);
+    }
+}
