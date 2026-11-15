@@ -1,9 +1,16 @@
 using Courses.Components;
+using Microsoft.EntityFrameworkCore;
+using Courses.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
 builder.Services.AddRazorComponents();
+builder.Services.AddDbContextFactory<CoursesContext>(o =>
+    o.UseSqlite("Data Source=courses.db"));
+
+builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 var app = builder.Build();
 
